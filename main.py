@@ -9,8 +9,6 @@ url = "https://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html"
 def scrapbook(url):
     page = requests.get(url)
 
-
-
     soup = BeautifulSoup(page.content,"html.parser")
     book={}
     book["product_page_url"]=url
@@ -38,8 +36,8 @@ def scrapbook(url):
             informations.append(information.text)
 
     book["price_including_tax"] = informations[3]
-    book["price_exluding_tax"] = informations[2]
-    book["universal_ product_code"] = informations[0]
+    book["price_excluding_tax"] = informations[2]
+    book["universal_product_code"] = informations[0]
 
     #récuperer la valeur numérique du stock dans la string et la convertir
     stock_text = re.findall(r'\d+',informations[5])
@@ -47,7 +45,20 @@ def scrapbook(url):
     book["number_available"] = int(stock)
 
     #récuperer la class star rating
-    book["review_rating"] = soup.find('p', class_=re.compile(r'^star-rating')).get('class')[1]
+    note = soup.find('p', class_=re.compile(r'^star-rating')).get('class')[1]
+    match note:
+        case 'One':
+            book["review_rating"] = 1
+        case 'Two':
+            book["review_rating"] = 2
+        case 'Three':
+            book["review_rating"] = 3
+        case 'Four':
+            book["review_rating"] = 4
+        case 'Five':
+            book["review_rating"] = 5
+        case _:
+            book["review_rating"] = 0
 
     #recuperer la catégorie du livre
     categorie = soup.find('li').find_next('li').find_next('li')
@@ -56,11 +67,27 @@ def scrapbook(url):
     return book
 
 livre = scrapbook(url)
-
+ordre_cles=['product_page_url',
+            'universal_product_code',
+            'title',
+            'price_including_tax',
+            'price_excluding_tax',
+            'number_available',
+            'product_description',
+            'category',
+            'review_rating',
+            'image_url']
 
 #Création fichier csv
-with open('livres.csv','w') as fichier:
-    writer = csv.writer(fichier, delimiter=',')
+filename = "fichier.csv"
+with open(filename,'w',newline='') as fichier:
+    writer=csv.writer(fichier, delimiter=",")
+
+#Insertion en tete
+    writer.writerow(ordre_cles)
+
+#Insertion données
+    writer.writerow([livre[cle] for cle in ordre_cles])
 
 
 
