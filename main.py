@@ -1,5 +1,6 @@
 import csv
 import re
+from pprint import pprint
 
 import requests
 from bs4 import BeautifulSoup
@@ -67,6 +68,7 @@ def scrapbook(url):
     return book
 
 livre = scrapbook(url)
+
 ordre_cles=['product_page_url',
             'universal_product_code',
             'title',
@@ -88,6 +90,28 @@ with open(filename,'w',newline='') as fichier:
 
 #Insertion données
     writer.writerow([livre[cle] for cle in ordre_cles])
+
+
+url_category = "https://books.toscrape.com/catalogue/category/books/travel_2/index.html"
+
+# extraire les urls d'une catégorie'
+r = requests.get(url_category)
+liste_livre = BeautifulSoup(r.content,'html.parser')
+
+h3_tags = liste_livre.find_all('h3')
+
+data=[]
+links=[]
+for link in h3_tags:
+    links.append("https://books.toscrape.com/catalogue"+((link.find('a')['href']).replace("../../..","")))
+
+#extraction de toutes les infos des livres d'une categorie
+
+for i in links:
+    info= scrapbook(i)
+    data.append(info)
+
+pprint(data)
 
 
 
