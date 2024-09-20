@@ -1,11 +1,10 @@
 import csv
 import re
-from pprint import pprint
+
+from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
-
-url = "https://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html"
 
 def scrapbook(url):
     page = requests.get(url)
@@ -67,7 +66,40 @@ def scrapbook(url):
     book["category"] = categorie.replace("\n", "")
     return book
 
-livre = scrapbook(url)
+
+
+url_category = "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html"
+
+
+links=[]
+
+# extrait les urls d'une catégorie'
+
+r = requests.get(url_category)
+liste_livre = BeautifulSoup(r.content, 'html.parser')
+h3_tags = liste_livre.find_all('h3')
+for link in h3_tags:
+     links.append("https://books.toscrape.com/catalogue" + ((link.find('a')['href']).replace("../../..", "")))
+
+while liste_livre.find('li',class_='next'):
+    url= liste_livre.find('li',class_='next')
+    next_url=(url.find('a')['href'])
+    parsed_url_category = urlparse(url_category)
+    next_url = "https://books.toscrape.com"+'/'.join(parsed_url_category.path.split("/")[:-1])+"/"+next_url
+
+    r = requests.get(next_url)
+    liste_livre = BeautifulSoup(r.content, 'html.parser')
+    h3_tags = liste_livre.find_all('h3')
+    for link in h3_tags:
+        links.append("https://books.toscrape.com/catalogue" + ((link.find('a')['href']).replace("../../..", "")))
+
+#extraction de toutes les infos des livres d'une categorie
+
+data = []
+for i in links:
+
+    info= scrapbook(i)
+    data.append(info)
 
 ordre_cles=['product_page_url',
             'universal_product_code',
@@ -81,37 +113,16 @@ ordre_cles=['product_page_url',
             'image_url']
 
 #Création fichier csv
-filename = "fichier.csv"
+filename = "files/fichier.csv"
 with open(filename,'w',newline='') as fichier:
-    writer=csv.writer(fichier, delimiter=",")
-
+    writer=csv.DictWriter(fichier,ordre_cles, delimiter=",")
 #Insertion en tete
-    writer.writerow(ordre_cles)
-
+    writer.writeheader()
 #Insertion données
-    writer.writerow([livre[cle] for cle in ordre_cles])
+    writer.writerows(data)
 
 
-url_category = "https://books.toscrape.com/catalogue/category/books/travel_2/index.html"
 
-# extraire les urls d'une catégorie'
-r = requests.get(url_category)
-liste_livre = BeautifulSoup(r.content,'html.parser')
-
-h3_tags = liste_livre.find_all('h3')
-
-data=[]
-links=[]
-for link in h3_tags:
-    links.append("https://books.toscrape.com/catalogue"+((link.find('a')['href']).replace("../../..","")))
-
-#extraction de toutes les infos des livres d'une categorie
-
-for i in links:
-    info= scrapbook(i)
-    data.append(info)
-
-pprint(data)
 
 
 
