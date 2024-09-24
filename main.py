@@ -1,5 +1,7 @@
 import csv
+import os.path
 import re
+from typing import dataclass_transform
 
 from urllib.parse import urlparse
 
@@ -15,7 +17,6 @@ def scrapbook(url):
 
     #extraction du title du livre
     book["title"] = soup.find('h1').get_text()
-    print(book["title"])
 
     #extraction de l'url de l'image
     image = soup.find('img')
@@ -69,7 +70,6 @@ def scrapbook(url):
     return book
 
 #extrait la liste des catégories
-
 url="https://books.toscrape.com/index.html"
 r = requests.get(url)
 category_soup = BeautifulSoup(r.content,"html.parser")
@@ -84,7 +84,6 @@ for href in hrefs_categorys[1:]:
     links=[]
 
     # extrait les urls d'une catégorie'
-
     r = requests.get(url_category)
     liste_livre = BeautifulSoup(r.content, 'html.parser')
     h3_tags = liste_livre.find_all('h3')
@@ -102,7 +101,6 @@ for href in hrefs_categorys[1:]:
                 h3_tags = liste_livre.find_all('h3')
                 for link in h3_tags:
                     links.append("https://books.toscrape.com/catalogue" + ((link.find('a')['href']).replace("../../..", "")))
-
 
 #extraction de toutes les infos des livres d'une categorie
 
@@ -127,6 +125,11 @@ for href in hrefs_categorys[1:]:
 
     category = data[0]['category']
 
+    def creation_dossier(dossier):
+        if not os.path.exists(dossier):
+            os.makedirs(dossier)
+    creation_dossier("files")
+
     filename = f"files/{category}.csv"
     with open(filename,'w',newline='',encoding='utf-8') as fichier:
             writer=csv.DictWriter(fichier,ordre_cles, delimiter=",")
@@ -134,6 +137,30 @@ for href in hrefs_categorys[1:]:
             writer.writeheader()
             #Insertion données
             writer.writerows(data)
+
+    def download_image(url_image, url_categorie, title):
+        r_image = requests.get(url_image, stream=True)
+        ext_image = url_image.split(".")[-1]
+        nom_image = title
+        chemin_image = f"files/images/{url_categorie}/{nom_image}.{ext_image}"
+        with open(chemin_image, 'wb') as image_file:
+            image_file.write(r_image.content)
+
+
+    # Récupération des images
+    dossier = f"files/images/{category}"
+    creation_dossier(dossier)
+    for image in data:
+        url_image= image['image_url']
+        category=image['category']
+        title=image['title']
+        title=re.sub("[^a-zA-Z0-9]","_",title)
+        download_image(url_image,category,title)
+
+
+
+
+
 
 
 
