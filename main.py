@@ -15,16 +15,18 @@ def scrapbook(url):
 
     #extraction du title du livre
     book["title"] = soup.find('h1').get_text()
+    print(book["title"])
 
     #extraction de l'url de l'image
     image = soup.find('img')
     image = image['src']
     book["image_url"] = "https://books.toscrape.com/" + image.replace("../../", "")
 
-
     #extraction de la description du livre
-    description = soup.find('div',id="product_description")
-    book["product_description"] = description.find_next('p').get_text()
+    if soup.find('div',id="product_description"):
+        description = soup.find('div', id="product_description")
+        book["product_description"] = description.find_next('p').get_text()
+    else: book["product_description"]=""
 
     #extraction des donnees du tableau du livre
     table = soup.find('table')
@@ -66,60 +68,75 @@ def scrapbook(url):
     book["category"] = categorie.replace("\n", "")
     return book
 
+#extrait la liste des catégories
 
+url="https://books.toscrape.com/index.html"
+r = requests.get(url)
+category_soup = BeautifulSoup(r.content,"html.parser")
+categorys = category_soup.find('ul', class_="nav nav-list")
 
-url_category = "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html"
+category_links = categorys.find_all('a')
+hrefs_categorys =["https://books.toscrape.com/"+link.get('href') for link in category_links if link.get('href')]
 
+for href in hrefs_categorys[1:]:
+    url_category = href
 
-links=[]
+    links=[]
 
-# extrait les urls d'une catégorie'
+    # extrait les urls d'une catégorie'
 
-r = requests.get(url_category)
-liste_livre = BeautifulSoup(r.content, 'html.parser')
-h3_tags = liste_livre.find_all('h3')
-for link in h3_tags:
-     links.append("https://books.toscrape.com/catalogue" + ((link.find('a')['href']).replace("../../..", "")))
-
-while liste_livre.find('li',class_='next'):
-    url= liste_livre.find('li',class_='next')
-    next_url=(url.find('a')['href'])
-    parsed_url_category = urlparse(url_category)
-    next_url = "https://books.toscrape.com"+'/'.join(parsed_url_category.path.split("/")[:-1])+"/"+next_url
-
-    r = requests.get(next_url)
+    r = requests.get(url_category)
     liste_livre = BeautifulSoup(r.content, 'html.parser')
     h3_tags = liste_livre.find_all('h3')
     for link in h3_tags:
         links.append("https://books.toscrape.com/catalogue" + ((link.find('a')['href']).replace("../../..", "")))
 
+    while liste_livre.find('li',class_='next'):
+                url= liste_livre.find('li',class_='next')
+                next_url=(url.find('a')['href'])
+                parsed_url_category = urlparse(url_category)
+                next_url = "https://books.toscrape.com/"+"/".join(parsed_url_category.path.split("/")[:-1])+"/"+next_url
+
+                request2 = requests.get(next_url)
+                liste_livre = BeautifulSoup(request2.content, 'html.parser')
+                h3_tags = liste_livre.find_all('h3')
+                for link in h3_tags:
+                    links.append("https://books.toscrape.com/catalogue" + ((link.find('a')['href']).replace("../../..", "")))
+
+
 #extraction de toutes les infos des livres d'une categorie
 
-data = []
-for i in links:
+    data = []
+    for i in links:
 
-    info= scrapbook(i)
-    data.append(info)
+            info= scrapbook(i)
+            data.append(info)
 
-ordre_cles=['product_page_url',
-            'universal_product_code',
-            'title',
-            'price_including_tax',
-            'price_excluding_tax',
-            'number_available',
-            'product_description',
-            'category',
-            'review_rating',
-            'image_url']
+    ordre_cles=['product_page_url',
+                        'universal_product_code',
+                        'title',
+                        'price_including_tax',
+                        'price_excluding_tax',
+                        'number_available',
+                        'product_description',
+                        'category',
+                        'review_rating',
+                        'image_url']
 
-#Création fichier csv
-filename = "files/fichier.csv"
-with open(filename,'w',newline='') as fichier:
-    writer=csv.DictWriter(fichier,ordre_cles, delimiter=",")
-#Insertion en tete
-    writer.writeheader()
-#Insertion données
-    writer.writerows(data)
+    #Création fichier csv
+
+    category = data[0]['category']
+
+    filename = f"files/{category}.csv"
+    with open(filename,'w',newline='',encoding='utf-8') as fichier:
+            writer=csv.DictWriter(fichier,ordre_cles, delimiter=",")
+            #Insertion en tete
+            writer.writeheader()
+            #Insertion données
+            writer.writerows(data)
+
+
+
 
 
 
