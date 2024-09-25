@@ -1,6 +1,4 @@
 # created by virtualenv automatically
 *
 env/
-env/Scripts
-env/Lib
 files/
