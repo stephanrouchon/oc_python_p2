@@ -26,7 +26,7 @@ def scrapbook(url):
     if soup.find('div',id="product_description"):
         description = soup.find('div', id="product_description")
         book["product_description"] = description.find_next('p').get_text()
-    else: book["product_description"]=""
+    else: book["product_description"]="No description available"
 
     #extraction des donnees du tableau du livre
     table = soup.find('table')
@@ -155,18 +155,6 @@ for href in hrefs_categorys[1:]:
         title=image['title']
         title=re.sub("[^a-zA-Z0-9]","_",title)
         download_image(url_image,category,title)
+    print(f"Le fichier et les images de la catégorie {category} ont étés crées")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+print("la génération est terminée !")
