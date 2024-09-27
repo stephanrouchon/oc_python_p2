@@ -18,6 +18,8 @@ les champs sont séparés par des virgules dans les fichiers. les fichiers sont 
 
 Les images sont téléchargées dans un dossier files/images et avec un dossier pour chaque catégorie.
 
+## instalation
+
 l'instalation nécessite la version 3.12 de python
 
 pour installer l'application, il est nécessaire d'activer un environnement virtuel :
