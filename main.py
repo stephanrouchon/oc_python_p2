@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
-
+print("début de l'extraction...")
 def scrapbook(url):
     page = requests.get(url)
 
@@ -16,6 +16,7 @@ def scrapbook(url):
 
     #extraction du title du livre
     book["title"] = soup.find('h1').get_text()
+    print(f"extraction du livre : {book["title"]}")
 
     #extraction de l'url de l'image
     image = soup.find('img')
@@ -104,21 +105,24 @@ for href in hrefs_categorys[1:]:
 #extraction de toutes les infos des livres d'une categorie
 
     data = []
+
     for i in links:
 
             info= scrapbook(i)
             data.append(info)
 
-    ordre_cles=['product_page_url',
-                        'universal_product_code',
-                        'title',
-                        'price_including_tax',
-                        'price_excluding_tax',
-                        'number_available',
-                        'product_description',
-                        'category',
-                        'review_rating',
-                        'image_url']
+    ordre_cles=[
+        'product_page_url',
+        'universal_product_code',
+        'title',
+        'price_including_tax',
+        'price_excluding_tax',
+        'number_available',
+        'product_description',
+        'category',
+        'review_rating',
+        'image_url'
+        ]
 
     #Création fichier csv
 
